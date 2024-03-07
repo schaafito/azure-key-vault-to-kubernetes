@@ -43,18 +43,20 @@ import (
 )
 
 type injectorConfig struct {
-	namespace                    string
-	podName                      string
-	clientCertDir                string
-	retryTimes                   int
-	waitTimeBetweenRetries       int
-	useAuthService               bool
-	skipArgsValidation           bool
-	authServiceAddress           string
-	authServiceValidationAddress string
-	authServiceSecret            string
-	signatureB64                 string
-	pubKeyBase64                 string
+	namespace                            string
+	podName                              string
+	clientCertDir                        string
+	retryTimes                           int
+	waitTimeBetweenRetries               int
+	useAuthService                       bool
+	skipArgsValidation                   bool
+	authServiceAddress                   string
+	authServiceValidationAddress         string
+	authServiceSecret                    string
+	signatureB64                         string
+	pubKeyBase64                         string
+	disableChallengeResourceVerification bool
+	apiVersion                           string
 }
 
 var config injectorConfig
@@ -130,6 +132,8 @@ func initConfig() {
 	viper.SetDefault("env_injector_skip_args_validation", false)
 	viper.SetDefault("env_injector_log_level", "info")
 	viper.SetDefault("env_injector_log_format", "fmt")
+	viper.SetDefault("env_injector_disable_challenge_resource_verification", false)
+	viper.SetDefault("env_injector_api_version", false)
 
 	viper.AutomaticEnv()
 }
@@ -201,6 +205,10 @@ func main() {
 		retryTimes:             viper.GetInt("env_injector_retries"),
 		waitTimeBetweenRetries: viper.GetInt("env_injector_wait_before_retry"),
 		skipArgsValidation:     viper.GetBool("env_injector_skip_args_validation"),
+
+		// service options
+		disableChallengeResourceVerification: viper.GetBool("env_injector_disable_challenge_resource_verification"),
+		apiVersion: viper.GetString("env_injector_api_version"),
 	}
 
 	requiredEnvVars := map[string]string{
@@ -275,7 +283,10 @@ func main() {
 		}
 	}
 
-	vaultService := vault.NewService(creds, keyVaultDNSSuffix)
+	vaultService := vault.NewServiceWithOptions(creds, keyVaultDNSSuffix, &vault.ServiceOptions{
+		ApiVersion: config.apiVersion,
+		DisableChallengeResourceVerification: config.disableChallengeResourceVerification,
+	})
 
 	klog.V(4).InfoS("reading azurekeyvaultsecret's referenced in env variables")
 	cfg, err := rest.InClusterConfig()

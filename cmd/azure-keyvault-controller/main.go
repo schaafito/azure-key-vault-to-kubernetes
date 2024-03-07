@@ -62,14 +62,16 @@ import (
 const controllerAgentName = "azurekeyvaultcontroller"
 
 var (
-	version                   string
-	kubeconfig                string
-	masterURL                 string
-	cloudconfig               string
-	logFormat                 string
-	watchAllNamespaces        bool
-	kubeResyncPeriod          int
-	azureKeyVaultResyncPeriod int
+	version                                 string
+	kubeconfig                              string
+	masterURL                               string
+	cloudconfig                             string
+	logFormat                               string
+	watchAllNamespaces                      bool
+	kubeResyncPeriod                        int
+	azureKeyVaultResyncPeriod               int
+	disableChallengeResourceVerification    bool
+	apiVersion                              string
 )
 
 func initConfig() {
@@ -91,6 +93,8 @@ func init() {
 	flag.BoolVar(&watchAllNamespaces, "watch-all-namespaces", true, "Watch for custom resources in all namespaces, if set to false it will only watch the runtime namespace.")
 	flag.IntVar(&kubeResyncPeriod, "kube-resync-period", 30, "Resync period for kubernetes changes, in seconds. Defaults to 30.")
 	flag.IntVar(&azureKeyVaultResyncPeriod, "azure-resync-period", 30, "Resync period for Azure Key Vault changes, in seconds. Defaults to 30.")
+	flag.BoolVar(&disableChallengeResourceVerification, "disable-challenge-resource-verification", false, "Disables KeyVault challenge resource verification (https://aka.ms/azsdk/blog/vault-uri). Defaults to false. ")
+	flag.StringVar(&apiVersion, "api-version", "", "Specify the api-version to use for KeyVault API operations. Defaults to the SDK pre-configured version.")
 }
 
 func main() {
@@ -205,7 +209,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	vaultService := vault.NewService(token, keyVaultDNSSuffix)
+	vaultService := vault.NewServiceWithOptions(token, keyVaultDNSSuffix, &vault.ServiceOptions{
+		DisableChallengeResourceVerification: disableChallengeResourceVerification,
+		ApiVersion: apiVersion,
+	})
 
 	recorder := eventBroadcaster.NewRecorder(scheme.Scheme, corev1.EventSource{Component: controllerAgentName})
 

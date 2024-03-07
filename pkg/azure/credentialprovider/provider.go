@@ -222,6 +222,13 @@ func getCredentials(envSettings *azureAuth.EnvironmentSettings, resource string)
 	if creds, err := envSettings.GetClientCredentials(); err == nil {
 		creds.AADEndpoint = envSettings.Environment.ActiveDirectoryEndpoint
 		creds.Resource = resource
+		// On AzureStack + ADFS environments, the standard OAuthConfig provided to creds.ServicePrincipalToken() are
+		//      malformed for KeyVault so we will change them here. This is an implementation base off
+		// https://github.com/Azure/azure-sdk-for-python/pull/33634
+		//  The same underlying issue for the python SDK. Since the go-autorest SDK is currently no longer maintained we will implement the same fix here
+		if strings.HasSuffix(creds.AADEndpoint, "adfs") {
+			creds.TenantID = "adfs"
+		}
 
 		token, err := creds.ServicePrincipalToken()
 		if err != nil {
@@ -239,6 +246,13 @@ func getCredentials(envSettings *azureAuth.EnvironmentSettings, resource string)
 	if creds, err := envSettings.GetClientCertificate(); err == nil {
 		creds.AADEndpoint = envSettings.Environment.ActiveDirectoryEndpoint
 		creds.Resource = resource
+		// On AzureStack + ADFS environments, the standard OAuthConfig provided to creds.ServicePrincipalToken() are
+		//      malformed for KeyVault so we will change them here. This is an implementation base off
+		// https://github.com/Azure/azure-sdk-for-python/pull/33634
+		//  The same underlying issue for the python SDK. Since the go-autorest SDK is currently no longer maintained we will implement the same fix here
+		if strings.HasSuffix(creds.AADEndpoint, "adfs") {
+			creds.TenantID = "adfs"
+		}
 
 		token, err := creds.ServicePrincipalToken()
 		if err != nil {
@@ -256,6 +270,13 @@ func getCredentials(envSettings *azureAuth.EnvironmentSettings, resource string)
 	if creds, err := envSettings.GetUsernamePassword(); err == nil {
 		creds.AADEndpoint = envSettings.Environment.ActiveDirectoryEndpoint
 		creds.Resource = resource
+		// On AzureStack + ADFS environments, the standard OAuthConfig provided to creds.ServicePrincipalToken() are
+		//      malformed for KeyVault so we will change them here. This is an implementation base off
+		// https://github.com/Azure/azure-sdk-for-python/pull/33634
+		//  The same underlying issue for the python SDK. Since the go-autorest SDK is currently no longer maintained we will implement the same fix here
+		if strings.HasSuffix(creds.AADEndpoint, "adfs") {
+			creds.TenantID = "adfs"
+		}
 
 		token, err := creds.ServicePrincipalToken()
 		if err != nil {
